@@ -1,5 +1,6 @@
 import csv
-
+import os
+print("File save ho rahi hai yaha 👉", os.getcwd())
 #=====================================================
 #Student Smart Progress Calculator
 #Author = Aaryan
@@ -73,14 +74,18 @@ def calculate_result(marks_list):
     return total , percentage , highest , lowest , grade
 
 
-def save_data(name, student_class, total, percentage, grade):
+# Data Save Function
+def save_result(name, student_class, total, percentage, grade, highest, lowest):
 
-    with open("students_data.csv", "a", newline="") as file:
+    file_exists = os.path.isfile("students_progress.csv")
+
+    with open("students_progress.csv", "a", newline="") as file:
         writer = csv.writer(file)
 
-        writer.writerow([name, student_class, total, percentage, grade])
+        if not file_exists:
+            writer.writerow(["Name", "Class", "Total", "Percentage", "Grade", "Highest", "Lowest"])
 
-
+        writer.writerow([name, student_class, total, percentage, grade, highest, lowest])
 
 # ========== Main Program ===========
 Name_of_student = input("Enter Student Name :")
@@ -96,8 +101,6 @@ marks_list = get_marks(subjects)
 
 total, percentage, highest, lowest, grade = calculate_result(marks_list)
 
-save_data(Name_of_student, student_class, total, percentage, grade)
-
 # ======= Final Input =======
 
 # Display Final Result
@@ -109,5 +112,5 @@ print("Percentage =" ,percentage)
 print("Grade = " ,grade )
 print("Highest Marks =",highest)
 print("Lowest Marks =",lowest)
-
-print("\nData saved successfully in students_data.csv")
+save_result(Name_of_student, student_class, total, percentage, grade, highest, lowest)
+print("Result Saved Successfully!")
