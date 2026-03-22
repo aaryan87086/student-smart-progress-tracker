@@ -1,6 +1,6 @@
 import csv
 import os
-print("File save ho rahi hai yaha 👉", os.getcwd())
+print("File is saving here👉", os.getcwd())
 #=====================================================
 #Student Smart Progress Calculator
 #Author = Aaryan
