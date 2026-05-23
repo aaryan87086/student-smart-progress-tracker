@@ -5,6 +5,12 @@
 #=====================================================
 
 import sqlite3
+import cv2
+import face_recognition
+import os
+import pickle
+from datetime import datetime
+
 
 print("====Student Smart Progress Calcuclator====")
 
@@ -54,7 +60,7 @@ def get_marks(subjects):
                 break
 
             else :
-                print("Marks Should be entered between (1 - 100)")
+                print("Marks Should be entered between (0 - 100)")
 
     return marks_list
 
@@ -78,15 +84,35 @@ def calculate_result(marks_list):
 
     return total , percentage , highest , lowest , grade
 
+#FACE RECOGNITION
+
+def mark_attendance(name):
+    conn = sqlite3.connect("C:/VSCODE/student-smart-progress-tracker/students.db")
+    cursor = conn.cursor()
+
+    now = datetime.now()
+
+    date = now.strftime("%Y-%m-%d")
+    time = now.strftime("%H:%M:%S")
+
+    cursor.execute("""
+    INSERT INTO attendance
+    (name, date, time, status)
+    VALUES (?, ?, ?, ?)
+    """, (name, date, time, "Present"))
+
+    conn.commit()
+    conn.close()
+
+    print(f"Attendance Marked for {name}")
 
 # Data Save Function
 
 def save_result(name, student_class, total, percentage, grade, highest, lowest):
     print("Saving data...")
     
-    conn = sqlite3.connect("C:\VSCODE\student-smart-progress-tracker\students.db")
+    conn = sqlite3.connect(r"C:\VSCODE\student-smart-progress-tracker\students.db")
     cursor = conn.cursor()
-
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS students(
@@ -102,6 +128,16 @@ def save_result(name, student_class, total, percentage, grade, highest, lowest):
     """)
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS attendance(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        date TEXT,
+        time TEXT,
+        status TEXT
+    )
+    """)
+
+    cursor.execute("""
     INSERT INTO students
     (name , class, total, percentage, grade, highest, lowest)
     VALUES (?,?,?,?,?,?,?)
@@ -111,8 +147,68 @@ def save_result(name, student_class, total, percentage, grade, highest, lowest):
     conn.close()
 
 
+def recognize_face():
+
+    with open("face_data.pkl", "rb") as f:
+        data = pickle.load(f)
+
+    known_faces = data["faces"]
+    known_names = data["names"]
+
+    cap = cv2.VideoCapture(0)
+
+    while True:
+
+        ret, frame = cap.read()
+
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        locations = face_recognition.face_locations(rgb)
+
+        encodings = face_recognition.face_encodings(rgb, locations)
+
+        for face_encoding in encodings:
+
+            matches = face_recognition.compare_faces(
+                known_faces,
+                face_encoding
+            )
+
+            if True in matches:
+
+                match_index = matches.index(True)
+
+                name = known_names[match_index]
+
+                print("Face Recognized :", name)
+
+                mark_attendance(name)
+
+                cap.release()
+                cv2.destroyAllWindows()
+
+                return name
+
+        cv2.imshow("Face Recognition", frame)
+
+        if cv2.waitKey(1) == 27:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+    return None
+
+
 # ========== Main Program ===========
-Name_of_student = input("Enter Student Name :")
+print("Look at the Camera for Face Recognition")
+save_result("init", 0, 0, 0, "init", 0, 0)
+
+Name_of_student = recognize_face()
+
+if Name_of_student is None:
+    print("Face Not Recognized")
+    exit()
 student_class = int(input("Enter class 1- 12 :"))
 
 subjects = get_subjects(student_class)
