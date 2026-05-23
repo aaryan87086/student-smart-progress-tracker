@@ -1,11 +1,10 @@
-import csv
-import os
-print("File is saving here👉", os.getcwd())
 #=====================================================
 #Student Smart Progress Calculator
 #Author = Aaryan
 #Description = Calculate Total Marks , Percentage and Grade
 #=====================================================
+
+import sqlite3
 
 print("====Student Smart Progress Calcuclator====")
 
@@ -41,25 +40,31 @@ def get_subjects(student_class):
         return []
 
 def get_marks(subjects):
-   #Create empty list to store marks
+   
     marks_list = []
 
     #Take Marks input using loops
     for subject in subjects:
-        score = float(input(f"Enter marks for subjects {subject} :"))
-        marks_list.append(score)
+
+        while True:
+            score = float(input(f"Enter marks for subjects {subject} :"))
+
+            if (0 <= score <= 100):
+                marks_list.append(score)
+                break
+
+            else :
+                print("Marks Should be entered between (1 - 100)")
+
     return marks_list
 
 def calculate_result(marks_list):
 
-    #Calculating Total Marks
     total = sum(marks_list)
-    #Calculating Percentage
     percentage = total / len(marks_list)
-    # Find Highest and Lowest Marks
     highest = max(marks_list)
     lowest = min(marks_list)
-#Decide Grade based on percentage
+
     if (percentage >= 90):
         grade ="A"
     elif (percentage >= 75):
@@ -75,17 +80,36 @@ def calculate_result(marks_list):
 
 
 # Data Save Function
+
 def save_result(name, student_class, total, percentage, grade, highest, lowest):
+    print("Saving data...")
+    
+    conn = sqlite3.connect("C:\VSCODE\student-smart-progress-tracker\students.db")
+    cursor = conn.cursor()
 
-    file_exists = os.path.isfile("students_progress.csv")
 
-    with open("students_progress.csv", "a", newline="") as file:
-        writer = csv.writer(file)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS students(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        class INTEGER,
+        total REAL,
+        percentage REAL,
+        grade TEXT,
+        highest REAL,
+        lowest REAL
+    )
+    """)
 
-        if not file_exists:
-            writer.writerow(["Name", "Class", "Total", "Percentage", "Grade", "Highest", "Lowest"])
+    cursor.execute("""
+    INSERT INTO students
+    (name , class, total, percentage, grade, highest, lowest)
+    VALUES (?,?,?,?,?,?,?)
+    """ , (name , student_class, total, percentage, grade, highest, lowest))
 
-        writer.writerow([name, student_class, total, percentage, grade, highest, lowest])
+    conn.commit()
+    conn.close()
+
 
 # ========== Main Program ===========
 Name_of_student = input("Enter Student Name :")
