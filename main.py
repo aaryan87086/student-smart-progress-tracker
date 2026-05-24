@@ -12,8 +12,6 @@ import pickle
 from datetime import datetime
 
 
-print("====Student Smart Progress Calcuclator====")
-
 # ======= Functions Define =======
 def get_subjects(student_class):
 # Assign Subjects According to class 
@@ -115,6 +113,20 @@ def save_result(name, student_class, total, percentage, grade, highest, lowest):
     cursor = conn.cursor()
 
     cursor.execute("""
+    INSERT INTO students
+    (name , class, total, percentage, grade, highest, lowest)
+    VALUES (?,?,?,?,?,?,?)
+    """ , (name , student_class, total, percentage, grade, highest, lowest))
+
+    conn.commit()
+    conn.close()
+
+
+def initialize_db():
+    conn = sqlite3.connect(r"C:\VSCODE\student-smart-progress-tracker\students.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS students(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -137,16 +149,10 @@ def save_result(name, student_class, total, percentage, grade, highest, lowest):
     )
     """)
 
-    cursor.execute("""
-    INSERT INTO students
-    (name , class, total, percentage, grade, highest, lowest)
-    VALUES (?,?,?,?,?,?,?)
-    """ , (name , student_class, total, percentage, grade, highest, lowest))
-
     conn.commit()
     conn.close()
 
-
+    
 def recognize_face():
 
     with open("face_data.pkl", "rb") as f:
@@ -201,36 +207,58 @@ def recognize_face():
 
 
 # ========== Main Program ===========
-print("Look at the Camera for Face Recognition")
-save_result("init", 0, 0, 0, "init", 0, 0)
+print("====Student Smart Progress Calcuclator====")
+initialize_db()
 
-Name_of_student = recognize_face()
+while True:
+    print("\n--Scan Student--")
+    Name_of_student = recognize_face()
 
-if Name_of_student is None:
-    print("Face Not Recognized")
-    exit()
-student_class = int(input("Enter class 1- 12 :"))
+    if Name_of_student is None:
+        print("Face Not Recognized")
 
-subjects = get_subjects(student_class)
+    else:
+        print(f"\nWelcome {Name_of_student}!")
 
-if not subjects:
-    print("program stopped due to invalid input")
-    exit()
+        print("\n1. Enter Marks")
+        print("2. Scan Next Student")
+        print("3. Exit")
 
-marks_list = get_marks(subjects)
+        choice = input("Enter Choice (1/2/3): ").strip()
 
-total, percentage, highest, lowest, grade = calculate_result(marks_list)
+        if choice == "1":
+            student_class = int(input("Enter Class 1-12: "))
+            subjects = get_subjects(student_class)
 
-# ======= Final Input =======
+            if not subjects:
+                print("Invalid input, skipping...")
+                continue
 
-# Display Final Result
-print("\n ======= Result =======")
-print("Student Name =" ,Name_of_student)
-print("Marks Entered =" ,marks_list)
-print("Total Marks =" ,total)
-print("Percentage =" ,percentage)
-print("Grade = " ,grade )
-print("Highest Marks =",highest)
-print("Lowest Marks =",lowest)
-save_result(Name_of_student, student_class, total, percentage, grade, highest, lowest)
-print("Result Saved Successfully!")
+            marks_list = get_marks(subjects)
+            total, percentage, highest, lowest, grade = calculate_result(marks_list)
+
+            # ======= Final Input =======
+
+            # Display Final Result
+            print("\n ======= Result =======")
+            print("Student Name =" ,Name_of_student)
+            print("Marks Entered =" ,marks_list)
+            print("Total Marks =" ,total)
+            print("Percentage =" ,percentage)
+            print("Grade = " ,grade )
+            print("Highest Marks =",highest)
+            print("Lowest Marks =",lowest)
+            save_result(Name_of_student, student_class, total, percentage, grade, highest, lowest)
+            print("Result Saved Successfully!")
+
+
+            save_result(Name_of_student, student_class, total, percentage, grade, highest, lowest)
+            print("Result Saved Successfully!")
+
+        elif choice == "2":
+            print("Scanning next student...")
+            continue
+
+        elif choice == "3":
+            print("Program Closed!")
+            break
