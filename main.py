@@ -13,7 +13,8 @@ DB_PATH = os.path.join(BASE_DIR, "students.db")
 def initialize_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("""
+    for i in range(1,13):
+        cursor.execute("""
     CREATE TABLE IF NOT EXISTS students(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -87,7 +88,7 @@ def save_result(name, student_class, total, percentage, grade, highest, lowest):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-    INSERT INTO students (name, class, total, percentage, grade, highest, lowest)
+    INSERT INTO class_{student_class} (name, class, total, percentage, grade, highest, lowest)
     VALUES (?,?,?,?,?,?,?)
     """, (name, student_class, total, percentage, grade, highest, lowest))
     conn.commit()
@@ -96,13 +97,26 @@ def save_result(name, student_class, total, percentage, grade, highest, lowest):
 def view_all_students():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT name, class, percentage, grade FROM students")
+    while True:
+        try:
+            student_class = int(input("Enter class to view (1-12): "))
+            if 1 <= student_class <= 12:
+                break
+            else:
+                print("Class should be between (1 - 12) !")
+        except ValueError:
+            print("Enter number only! ")
+
+
+    cursor.execute(f"SELECT name, class, percentage, grade FROM class_{student_class}")
     rows = cursor.fetchall()
     conn.close()
-    print("\n{:<20} {:<8} {:<12} {}".format("Name", "Class", "Percentage", "Grade"))
-    print("-" * 45)
+
+    print(f"\n==== Class {student_class} Students ====")
+    print("\n{:<20} {:<8} {:<12} {:<8} {:<8} {}".format("Name", "Class", "Percentage", "Grade"))
+    print("-" * 65)
     for row in rows:
-        print("{:<20} {:<8} {:<12.2f} {}".format(*row))
+        print("{:<20} {:<8} {:<12.2f} {:<8} {:<8} {}".format(*row))
 
 
 # ========== Main Program ===========
