@@ -14,11 +14,10 @@ def initialize_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     for i in range(1,13):
-        cursor.execute("""
-    CREATE TABLE IF NOT EXISTS students(
+        cursor.execute(f"""
+    CREATE TABLE IF NOT EXISTS class_{i}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        class INTEGER,
         total REAL,
         percentage REAL,
         grade TEXT,
@@ -87,10 +86,10 @@ def calculate_result(marks_list):
 def save_result(name, student_class, total, percentage, grade, highest, lowest):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("""
-    INSERT INTO class_{student_class} (name, class, total, percentage, grade, highest, lowest)
-    VALUES (?,?,?,?,?,?,?)
-    """, (name, student_class, total, percentage, grade, highest, lowest))
+    cursor.execute(f"""
+    INSERT INTO class_{student_class} (name, total, percentage, grade, highest, lowest)
+    VALUES (?,?,?,?,?,?)
+    """, (name, total, percentage, grade, highest, lowest))
     conn.commit()
     conn.close()
 
@@ -108,15 +107,15 @@ def view_all_students():
             print("Enter number only! ")
 
 
-    cursor.execute(f"SELECT name, class, percentage, grade FROM class_{student_class}")
+    cursor.execute(f"SELECT name, total, percentage, grade, highest, lowest FROM class_{student_class}")
     rows = cursor.fetchall()
     conn.close()
 
     print(f"\n==== Class {student_class} Students ====")
-    print("\n{:<20} {:<8} {:<12} {:<8} {:<8} {}".format("Name", "Class", "Percentage", "Grade"))
+    print("\n{:<20} {:<8} {:<12} {:<8} {:<8} {}".format("Name", "Total", "Percentage", "Grade", "Highest", "Lowest"))
     print("-" * 65)
     for row in rows:
-        print("{:<20} {:<8} {:<12.2f} {:<8} {:<8} {}".format(*row))
+        print("{:<20} {:<8.2f} {:<12.2f} {:<8} {:<8.2f} {:<8.2f}".format(*row))
 
 
 # ========== Main Program ===========
