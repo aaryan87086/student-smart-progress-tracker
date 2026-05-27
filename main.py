@@ -6,6 +6,8 @@
 
 import sqlite3
 import os
+import matplotlib.pyplot as plt
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "students.db")
@@ -18,6 +20,8 @@ def initialize_db():
     CREATE TABLE IF NOT EXISTS class_{i}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
+        test_name TEXT,
+        date TEXT,
         total REAL,
         percentage REAL,
         grade TEXT,
@@ -83,13 +87,13 @@ def calculate_result(marks_list):
         grade = "Fail"
     return total, percentage, highest, lowest, grade
 
-def save_result(name, student_class, total, percentage, grade, highest, lowest):
+def save_result(name, student_class, test_name, date, total, percentage, grade, highest, lowest):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(f"""
-    INSERT INTO class_{student_class} (name, total, percentage, grade, highest, lowest)
-    VALUES (?,?,?,?,?,?)
-    """, (name, total, percentage, grade, highest, lowest))
+    INSERT INTO class_{student_class} (name, test_name, date, total, percentage, grade, highest, lowest)
+    VALUES (?,?,?,?,?,?,?,?)
+    """, (name, test_name, date, total, percentage, grade, highest, lowest))
     conn.commit()
     conn.close()
 
@@ -118,6 +122,58 @@ def view_all_students():
         print("{:<20} {:<8.2f} {:<12.2f} {:<8} {:<8.2f} {:<8.2f}".format(*row))
 
 
+def show_student_progress():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    name = input("Enter student name: ").strip()
+
+    while True :
+        try:
+            student_class = int(input("Enter the class (1 - 12) :"))
+
+            if (1 <= student_class <= 12):
+                break
+            
+            else:
+                print("class should be between (1-12) : ")
+
+        except ValueError:
+            print("Enter Numbers Only! ")
+
+    cursor.execute(f"""
+    SELECT test_name , percentage
+    FROM class_{student_class}
+    WHERE name = ?
+    """, (name,))
+
+    data = cursor.fetchall()
+    conn.close()
+
+    if not data:
+        print("Data not Found! ")
+        return
+    
+    test_name = []
+    percentage = []
+
+    for row in data:
+        test_name.append(row[0])
+        percentage.append(row[1])
+
+    plt.plot(test_name, percentage, marker = 'o')
+
+    plt.title(f"{name}'s Progress Report")
+
+    plt.xlabel("Tests")
+
+    plt.ylabel("Percentage")
+
+    plt.grid(True)
+
+    plt.show()
+    
+ 
 # ========== Main Program ===========
 print("==== Student Smart Progress Calculator ====")
 initialize_db()
@@ -125,8 +181,9 @@ initialize_db()
 while True:
     print("\n1. Add Students")
     print("2. View All Students")
-    print("3. Exit")
-    choice = input("Enter Choice (1/2/3): ").strip()
+    print("3. Show Student Progress Graph")
+    print("4. Exit")
+    choice = input("Enter Choice (1/2/3/4): ").strip()
 
     if choice == "1":
         name = input("Enter Student Name: ").strip()
@@ -140,6 +197,11 @@ while True:
 
             except ValueError:
                 print("Enter Number Only!")
+
+        test_name = input("Enter test name: ").strip()
+
+        date = datetime.now().strftime("%Y-%m-%d")
+
         subjects = get_subjects(student_class)
 
         if not subjects:
@@ -156,7 +218,7 @@ while True:
         print("Highest =", highest)
         print("Lowest =", lowest)
 
-        save_result(name, student_class, total, percentage, grade, highest, lowest)
+        save_result(name, student_class, test_name, date, total, percentage, grade, highest, lowest)
         print("Result Saved!")
 
 
@@ -164,5 +226,8 @@ while True:
         view_all_students()
 
     elif choice == "3":
+        show_student_progress()
+
+    elif choice == "4":
         print("Bye!")
         break
