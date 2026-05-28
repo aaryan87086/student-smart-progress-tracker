@@ -19,6 +19,7 @@ def initialize_db():
         cursor.execute(f"""
     CREATE TABLE IF NOT EXISTS class_{i}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        roll_no INTEGER,
         name TEXT,
         test_name TEXT,
         date TEXT,
@@ -87,13 +88,13 @@ def calculate_result(marks_list):
         grade = "Fail"
     return total, percentage, highest, lowest, grade
 
-def save_result(name, student_class, test_name, date, total, percentage, grade, highest, lowest):
+def save_result(roll_no, name, student_class, test_name, date, total, percentage, grade, highest, lowest):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(f"""
-    INSERT INTO class_{student_class} (name, test_name, date, total, percentage, grade, highest, lowest)
-    VALUES (?,?,?,?,?,?,?,?)
-    """, (name, test_name, date, total, percentage, grade, highest, lowest))
+    INSERT INTO class_{student_class} (roll_no, name, test_name, date, total, percentage, grade, highest, lowest)
+    VALUES (?,?,?,?,?,?,?,?,?)
+    """, (roll_no, name, test_name, date, total, percentage, grade, highest, lowest))
     conn.commit()
     conn.close()
 
@@ -111,22 +112,23 @@ def view_all_students():
             print("Enter number only! ")
 
 
-    cursor.execute(f"SELECT name, total, percentage, grade, highest, lowest FROM class_{student_class}")
+    cursor.execute(f"SELECT roll_no, name, total, percentage, grade, highest, lowest FROM class_{student_class}")
     rows = cursor.fetchall()
     conn.close()
 
     print(f"\n==== Class {student_class} Students ====")
-    print("\n{:<20} {:<8} {:<12} {:<8} {:<8} {}".format("Name", "Total", "Percentage", "Grade", "Highest", "Lowest"))
+    print("\n{:<10} {:<20} {:<10} {:<12} {:<8} {:<10} {:<10} ".format("Roll_no", "Name", "Total", "Percentage", "Grade", "Highest", "Lowest"))
     print("-" * 65)
     for row in rows:
-        print("{:<20} {:<8.2f} {:<12.2f} {:<8} {:<8.2f} {:<8.2f}".format(*row))
+        print("{:<10} {:<20} {:<10.2f} {:<12.2f} {:<8} {:<10.2f} {:<10.2f}".format(
+            row[0], row[1], row[2], row[3], row[4], row[5], row[6]))
 
 
 def show_student_progress():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    name = input("Enter student name: ").strip()
+    roll_no = int(input("Enter Roll_no: "))
 
     while True :
         try:
@@ -142,10 +144,10 @@ def show_student_progress():
             print("Enter Numbers Only! ")
 
     cursor.execute(f"""
-    SELECT test_name , percentage
+    SELECT name, test_name , percentage
     FROM class_{student_class}
-    WHERE name = ?
-    """, (name,))
+    WHERE roll_no = ?
+    """, (roll_no,))
 
     data = cursor.fetchall()
     conn.close()
@@ -157,13 +159,15 @@ def show_student_progress():
     test_name = []
     percentage = []
 
+    student_name = data[0][0]
+
     for row in data:
-        test_name.append(row[0])
-        percentage.append(row[1])
+        test_name.append(row[1])
+        percentage.append(row[2])
 
     plt.plot(test_name, percentage, marker = 'o')
 
-    plt.title(f"{name}'s Progress Report")
+    plt.title(f"{student_name}'s Progress Report")
 
     plt.xlabel("Tests")
 
@@ -186,6 +190,7 @@ while True:
     choice = input("Enter Choice (1/2/3/4): ").strip()
 
     if choice == "1":
+        roll_no = int(input("Enter Roll No. :"))
         name = input("Enter Student Name: ").strip()
         while True:
             try:
@@ -218,7 +223,7 @@ while True:
         print("Highest =", highest)
         print("Lowest =", lowest)
 
-        save_result(name, student_class, test_name, date, total, percentage, grade, highest, lowest)
+        save_result(roll_no, name, student_class, test_name, date, total, percentage, grade, highest, lowest)
         print("Result Saved!")
 
 

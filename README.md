@@ -17,7 +17,7 @@ It also saves student records in a CSV file.
 ✅ Class-wise subject selection  
 ✅ Stream selection for Class 11 & 12  
 ✅ Automatic grade calculation  
-✅ Data saved in CSV file  
+✅ Data saved in SQL file  
 ✅ Simple and beginner-friendly logic  
 
 ---
@@ -25,7 +25,8 @@ It also saves student records in a CSV file.
 ## 🛠 Technologies Used
 
 - Python
-- CSV module
+- SQlite
+- Matplotlib
 
 ---
 
